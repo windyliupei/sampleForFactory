@@ -1,20 +1,139 @@
-﻿using System;
+﻿using DemoForFactory.Entity;
+using DemoForFactory.HttpAccess;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DemoForFactory
 {
-    public partial class Form1 : Form
+    public partial class Sample : Form
     {
-        public Form1()
+        public Sample()
         {
             InitializeComponent();
+        }
+
+        private void Sample_Load(object sender, EventArgs e)
+        {
+            this.cmb_ApiAchema.SelectedIndex = 0;
+            this.cmb_HttpMethod.SelectedIndex = 0;
+        }
+
+        private void Btn_SendApi_Click(object sender, EventArgs e)
+        {
+            //Generate Demo Entity
+            UploadSo uploadSo = CreateEntity();
+
+            //Generate Json
+            string entityJson = JsonConvert.SerializeObject(uploadSo);
+            txt_Nas_SendContext.Text = entityJson;
+
+            //Get HOST address,port,......
+            string url = GetUrl();
+
+            //Set hearders
+            SendToServer(entityJson, url);
+
+        }
+
+        private void SendToServer(string entityJson, string url)
+        {
+            Dictionary<string, string> hearders = new Dictionary<string, string>();
+            hearders.Add("tokenKey", txt_Token.Text);
+
+            HttpContent content = new StringContent(entityJson);
+            HttpClientOperationAsync operationAsync = new HttpClientOperationAsync(url, content, hearders);
+
+            string selectedHttpMethod = cmb_HttpMethod.SelectedItem.ToString();
+            Task<HttpResponseMessage> task = null;
+            switch (selectedHttpMethod)
+            {
+                case "POST":
+                    {
+                        task = operationAsync.PostAsync();
+                        break;
+                    }
+                case "GET":
+                    {
+                        task = operationAsync.GetAsync();
+                        break;
+                    }
+                case "DELETE":
+                    {
+                        task = operationAsync.DeleteAsync();
+                        break;
+                    }
+                case "PUT":
+                    {
+                        task = operationAsync.PutAsync();
+                        break;
+                    }
+                default:
+
+                    break;
+            }
+
+            if (task != null && task.Result.Content == null)
+            {
+                MessageBox.Show("WTF!!!!");
+                return;
+            }
+
+            if (task != null)
+            {
+                string httpResponse = task.Result.Content.ReadAsStringAsync().Result;
+
+                txt_received.Text = httpResponse;
+            }
+        }
+
+        private string GetUrl()
+        {
+            string schema = cmb_ApiAchema.SelectedItem.ToString();
+            string host = txt_ApiHost.Text;
+            int port = (int)num_ApiPort.Value;
+            string uri = txt_ApiAction.Text;
+            string url = string.Format("{0}{1}:{2}{3}", schema, host, port, uri);
+            return url;
+        }
+
+        private static UploadSo CreateEntity()
+        {
+            //Create Demo Entity:
+            SalesOrder salesOrder = new SalesOrder();
+            salesOrder.soNumber = 123456L;
+            salesOrder.orderLineId = "15.5";
+            salesOrder.modelNo = "KJ400";
+            salesOrder.requestDate = "2018-06-25";
+            salesOrder.promiseDate = "2018-07-25";
+            salesOrder.soInputDate = "2018-08-25";
+            salesOrder.orderedQuantity = 100;
+            salesOrder.salespresonNumber = "H144198";
+
+            SalesOrder salesOrder2 = new SalesOrder();
+            salesOrder2.soNumber = 123456L;
+            salesOrder2.orderLineId = "20.5";
+            salesOrder2.modelNo = "KJ410";
+            salesOrder2.requestDate = "2017-06-25";
+            salesOrder2.promiseDate = "2016-06-25";
+            salesOrder2.soInputDate = "2015-06-25";
+            salesOrder2.orderedQuantity = 200;
+            salesOrder2.salespresonNumber = "E123456";
+
+            UploadSo uploadSo = new UploadSo();
+            List<SalesOrder> salesOrders = new List<SalesOrder>();
+            salesOrders.Add(salesOrder);
+            salesOrders.Add(salesOrder2);
+            uploadSo.list = salesOrders;
+            return uploadSo;
         }
     }
 }
