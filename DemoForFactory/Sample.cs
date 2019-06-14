@@ -44,6 +44,14 @@ namespace DemoForFactory
 
         }
 
+        private void SendToByGet(string url)
+        {
+            Afx.HttpClient.HttpClient client = new Afx.HttpClient.HttpClient();
+            client.AddHeader("tokenKey", txt_Token.Text);
+            string result = client.Get(url).Body;
+            txt_received.Text = result;
+        }
+
         private void SendToServer(string entityJson, string url)
         {
             Dictionary<string, string> hearders = new Dictionary<string, string>();
@@ -63,7 +71,8 @@ namespace DemoForFactory
                     }
                 case "GET":
                     {
-                        task = operationAsync.GetAsync();
+                        //task = operationAsync.GetAsync();
+                        SendToByGet(url);
                         break;
                     }
                 case "DELETE":
