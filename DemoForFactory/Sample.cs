@@ -8,6 +8,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -16,6 +17,7 @@ namespace DemoForFactory
 {
     public partial class Sample : Form
     {
+        private Random _ro = new Random(10);
         public Sample()
         {
             InitializeComponent();
@@ -47,7 +49,15 @@ namespace DemoForFactory
         private void SendToByGet(string url)
         {
             Afx.HttpClient.HttpClient client = new Afx.HttpClient.HttpClient();
-            client.AddHeader("tokenKey", txt_Token.Text);
+
+            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            string random = _ro.Next(1000, 9999).ToString();
+
+            string apiToken = GetApiToken(timestamp, random);
+            client.AddHeader("tokenKey", apiToken);
+            client.AddHeader("timestamp", timestamp);
+            client.AddHeader("random", random);
+            
             string result = client.Get(url).Body;
             txt_received.Text = result;
         }
@@ -55,7 +65,13 @@ namespace DemoForFactory
         private void SendToServer(string entityJson, string url)
         {
             Dictionary<string, string> hearders = new Dictionary<string, string>();
-            hearders.Add("tokenKey", txt_Token.Text);
+            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            string random = _ro.Next(1000, 9999).ToString();
+
+            string apiToken = GetApiToken(timestamp, random);
+            hearders.Add("tokenKey", apiToken);
+            hearders.Add("timestamp", timestamp);
+            hearders.Add("random", random);
 
             HttpContent content = new StringContent(entityJson);
             HttpClientOperationAsync operationAsync = new HttpClientOperationAsync(url, content, hearders);
@@ -104,7 +120,32 @@ namespace DemoForFactory
             }
         }
 
-        private string GetUrl()
+        private string GetApiToken(string timestamp,string random)
+        {
+            string apiKey = "此处我给你发邮件";
+            string tobeEncode = String.Format("apikey={0}&timestamp={1}&random={2}", apiKey, timestamp, random);
+            string apiToekn = Sha256(tobeEncode);
+
+            return apiToekn;
+        }
+
+        public string Sha256(string data)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(data);
+            byte[] hash = SHA256Managed.Create().ComputeHash(bytes);
+
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < hash.Length; i++)
+            {
+                builder.Append(hash[i].ToString("X2"));
+            }
+
+            return builder.ToString();
+
+        }
+
+
+    private string GetUrl()
         {
             string schema = cmb_ApiAchema.SelectedItem.ToString();
             string host = txt_ApiHost.Text;

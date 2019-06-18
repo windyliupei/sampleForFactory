@@ -194,6 +194,7 @@
             this.txt_Token.Name = "txt_Token";
             this.txt_Token.Size = new System.Drawing.Size(481, 20);
             this.txt_Token.TabIndex = 34;
+            this.txt_Token.Text = "power_on_qrcode";
             // 
             // lbl_token
             // 

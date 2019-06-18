@@ -71,10 +71,10 @@ namespace DemoForFactory.HttpAccess
         public HttpClientOperationAsync(string requestUrl)
         {
             this.RequestUrl = requestUrl;
-            _handleClient = CreateHttpClient();
+            //_handleClient = CreateHttpClient();
             this.ContentType = DEFAULTCONTENTTYPE;
             ServerCertificateValidationCallback = (obj, certificate, x509Chain, sslpolicyerrors) => true;
-            this.CreateHttpClient();
+            //this.CreateHttpClient();
         }
 
         #endregion
@@ -169,15 +169,15 @@ namespace DemoForFactory.HttpAccess
 
         #endregion
 
-        public Task<HttpResponseMessage> GetAsync()
+        public Task<String> GetAsync()
         {
             _handleClient = CreateHttpClient();
-            Task<HttpResponseMessage> task = null;
+            Task<String> task = null;
             try
             {
                 using (_handleClient.Item1)
                 {
-                    task = _handleClient.Item2.GetAsync(this.RequestUrl, this.CancellationToken);
+                    task = _handleClient.Item2.GetStringAsync(this.RequestUrl);
                 }
             }
             catch (Exception e)
