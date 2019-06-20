@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -27,6 +28,10 @@ namespace DemoForFactory
         {
             this.cmb_ApiAchema.SelectedIndex = 0;
             this.cmb_HttpMethod.SelectedIndex = 0;
+
+            //Load App settings
+            txt_ApiHost.Text = ConfigurationManager.AppSettings.Get("env_address");
+            num_ApiPort.Value = Decimal.Parse(ConfigurationManager.AppSettings.Get("env_port"));
         }
 
         private void Btn_SendApi_Click(object sender, EventArgs e)
