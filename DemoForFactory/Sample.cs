@@ -7,9 +7,13 @@ using System.ComponentModel;
 using System.Configuration;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Net.Security;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -18,11 +22,15 @@ namespace DemoForFactory
 {
     public partial class Sample : Form
     {
-        private Random _ro = new Random(10);
+        private Random _ro = new Random(DateTime.Now.Second);
+
+        
         public Sample()
         {
             InitializeComponent();
         }
+
+       
 
         private void Sample_Load(object sender, EventArgs e)
         {
@@ -51,21 +59,21 @@ namespace DemoForFactory
 
         }
 
-        private void SendToByGet(string url)
-        {
-            Afx.HttpClient.HttpClient client = new Afx.HttpClient.HttpClient();
-
-            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
-            string random = _ro.Next(1000, 9999).ToString();
-
-            string apiToken = GetApiToken(timestamp, random);
-            client.AddHeader("tokenKey", apiToken);
-            client.AddHeader("timestamp", timestamp);
-            client.AddHeader("random", random);
+        //private void SendToByGet(string url)
+        //{
+        //    Afx.HttpClient.HttpClient client = new Afx.HttpClient.HttpClient();
             
-            string result = client.Get(url).Body;
-            txt_received.Text = result;
-        }
+        //    string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+        //    string random = _ro.Next(1000, 9999).ToString();
+
+        //    string apiToken = GetApiToken(timestamp, random);
+        //    client.AddHeader("tokenKey", apiToken);
+        //    client.AddHeader("timestamp", timestamp);
+        //    client.AddHeader("random", random);
+            
+        //    string result = client.Get(url).Body;
+        //    txt_received.Text = result;
+        //}
 
         private void SendToServer(string entityJson, string url)
         {
@@ -80,6 +88,7 @@ namespace DemoForFactory
 
             HttpContent content = new StringContent(entityJson);
             HttpClientOperationAsync operationAsync = new HttpClientOperationAsync(url, content, hearders);
+            
 
             string selectedHttpMethod = cmb_HttpMethod.SelectedItem.ToString();
             Task<HttpResponseMessage> task = null;
@@ -92,8 +101,7 @@ namespace DemoForFactory
                     }
                 case "GET":
                     {
-                        //task = operationAsync.GetAsync();
-                        SendToByGet(url);
+                        task = operationAsync.GetAsync();
                         break;
                     }
                 case "DELETE":
@@ -127,7 +135,7 @@ namespace DemoForFactory
 
         private string GetApiToken(string timestamp,string random)
         {
-            string apiKey = "此处我给你发邮件";
+            string apiKey = "power_on_qrcode";
             string tobeEncode = String.Format("apikey={0}&timestamp={1}&random={2}", apiKey, timestamp, random);
             string apiToekn = Sha256(tobeEncode);
 
@@ -149,8 +157,16 @@ namespace DemoForFactory
 
         }
 
+        //public static string HmacSha1Sign(string secret, string strOrgData)
+        //{
+        //    var hmacsha256 = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+        //    var dataBuffer = Encoding.UTF8.GetBytes(strOrgData);
+        //    var hashBytes = hmacsha256.ComputeHash(dataBuffer);
+        //    return Convert.ToBase64String(hashBytes);
+        //}
 
-    private string GetUrl()
+
+        private string GetUrl()
         {
             string schema = cmb_ApiAchema.SelectedItem.ToString();
             string host = txt_ApiHost.Text;
@@ -190,5 +206,6 @@ namespace DemoForFactory
             uploadSo.list = salesOrders;
             return uploadSo;
         }
+ 
     }
 }

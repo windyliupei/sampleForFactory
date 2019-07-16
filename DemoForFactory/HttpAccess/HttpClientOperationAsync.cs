@@ -20,6 +20,12 @@ namespace DemoForFactory.HttpAccess
         private Tuple<WebRequestHandler, HttpClient> _handleClient;
         private CancellationToken _cancellationToken;
         private ILogger _logger = LogManager.GetCurrentClassLogger();
+        static String QacaFilePath = @"C:\WorkSpace\RelateProject\Saas\App调用云的证书\qa.cer";
+        static String ProductFilePath = @"C:\WorkSpace\RelateProject\Saas\App调用云的证书\DigiCertGlobalRootCA.crt";
+
+        static String caFilePath = ProductFilePath;
+
+        X509Certificate2 x509Certificate2 = null;
 
         #endregion
 
@@ -71,10 +77,8 @@ namespace DemoForFactory.HttpAccess
         public HttpClientOperationAsync(string requestUrl)
         {
             this.RequestUrl = requestUrl;
-            //_handleClient = CreateHttpClient();
             this.ContentType = DEFAULTCONTENTTYPE;
             ServerCertificateValidationCallback = (obj, certificate, x509Chain, sslpolicyerrors) => true;
-            //this.CreateHttpClient();
         }
 
         #endregion
@@ -169,15 +173,25 @@ namespace DemoForFactory.HttpAccess
 
         #endregion
 
-        public Task<String> GetAsync()
+        public Task<HttpResponseMessage> GetAsync()
         {
             _handleClient = CreateHttpClient();
-            Task<String> task = null;
+
+            this.CreateX509Certificate2(caFilePath, "");
+            ServicePointManager.ServerCertificateValidationCallback = RemoteCertificateValidate;
+
+            Task<HttpResponseMessage> task = null;
             try
             {
                 using (_handleClient.Item1)
                 {
-                    task = _handleClient.Item2.GetStringAsync(this.RequestUrl);
+                    HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, this.RequestUrl);
+                    foreach (string key in this.Heards.Keys)
+                    {
+                        requestMessage.Headers.Add(key, this.Heards[key]);
+                    }
+                    
+                    task = _handleClient.Item2.SendAsync(requestMessage);
                 }
             }
             catch (Exception e)
@@ -185,6 +199,8 @@ namespace DemoForFactory.HttpAccess
                 _logger.Error(e);
             }
             return task;
+
+
         }
 
         public Task<HttpResponseMessage> PostAsync()
@@ -196,14 +212,17 @@ namespace DemoForFactory.HttpAccess
             }
 
             _handleClient = CreateHttpClient();
+
+            this.CreateX509Certificate2(caFilePath, "");
+            ServicePointManager.ServerCertificateValidationCallback = RemoteCertificateValidate;
+
+
             Task<HttpResponseMessage> task = null;
             try
             {
                 using (_handleClient.Item1)
                 {
-
                     task = _handleClient.Item2.PostAsync(this.RequestUrl, this.HttpBody, this.CancellationToken);
-
                 }
             }
             catch (Exception e)
@@ -223,6 +242,10 @@ namespace DemoForFactory.HttpAccess
             }
 
             _handleClient = CreateHttpClient();
+
+            this.CreateX509Certificate2(caFilePath, "");
+            ServicePointManager.ServerCertificateValidationCallback = RemoteCertificateValidate;
+
             Task<HttpResponseMessage> task = null;
             try
             {
@@ -247,6 +270,10 @@ namespace DemoForFactory.HttpAccess
             }
 
             _handleClient = CreateHttpClient();
+
+            this.CreateX509Certificate2(caFilePath, "");
+            ServicePointManager.ServerCertificateValidationCallback = RemoteCertificateValidate;
+
             Task<HttpResponseMessage> task = null;
             try
             {
@@ -269,7 +296,7 @@ namespace DemoForFactory.HttpAccess
                 throw new ArgumentException("Httphandle HttpClient null");
             }
 
-            X509Certificate2 x509Certificate2 = null;
+            
             if (string.IsNullOrEmpty(password))
             {
                 x509Certificate2 = new X509Certificate2(certFilePath);
@@ -280,6 +307,45 @@ namespace DemoForFactory.HttpAccess
                 x509Certificate2 = new X509Certificate2(certFilePath, password);
             }
             this._handleClient.Item1.ClientCertificates.Add(x509Certificate2);
+            this._handleClient.Item1.ServerCertificateValidationCallback += RemoteCertificateValidate;
+        }
+
+        public bool RemoteCertificateValidate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            if (null != x509Certificate2)
+            {
+                /*
+                 * 根证书未安装到“受信任的根证书颁发机构”时，默认是无法形成可信证书链的。（chain中将只有服务器证书本身）
+                 * 需更改链策略，然后重新构建证书链。
+                */
+                // 将我们的根证书放到链引擎可搜索到的地方
+                chain.ChainPolicy.ExtraStore.Add(x509Certificate2);
+                //不执行吊销检查
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                //忽略CA未知情况、不做时间检查
+                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority | X509VerificationFlags.IgnoreNotTimeNested | X509VerificationFlags.IgnoreNotTimeValid;
+                //重新构建可信证书链
+                bool isOk = chain.Build(certificate as X509Certificate2);
+                if (isOk)
+                {
+                    //获取最前面的证书，认为是根证书
+                    X509Certificate2 cacert = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
+                    bool check= x509Certificate2.GetPublicKeyString().Equals(cacert.GetPublicKeyString()) && x509Certificate2.Thumbprint.Equals(cacert.Thumbprint);
+
+                    HttpWebRequest req = sender as HttpWebRequest;
+
+                    bool isOkForQaSt = certificate.Subject.Contains("CN=" + "*" + req.Address.Host.Substring(req.Address.Host.IndexOf(".")));
+                    bool isOkForProduct = certificate.Subject.Contains("CN=" + req.Address.Host);
+
+                    if (null != req && (isOkForQaSt|| isOkForProduct))
+                    {
+                        //根证书可信且服务器证书确实是指定服务器的，验证通过
+                        return true;       
+                    }
+                    
+                }
+            }
+            return false;
         }
     }
 }
