@@ -34,8 +34,11 @@ namespace DemoForFactory
 
         private void Sample_Load(object sender, EventArgs e)
         {
-            this.cmb_ApiAchema.SelectedIndex = 0;
+            this.cmb_ApiAchema.SelectedIndex = 1;
             this.cmb_HttpMethod.SelectedIndex = 0;
+            this.txt_ApiHost.Text = "qa.homecloud.honeywell.com.cn";
+            this.num_ApiPort.Value = 443;
+
 
             //Load App settings
             txt_ApiHost.Text = ConfigurationManager.AppSettings.Get("env_address");

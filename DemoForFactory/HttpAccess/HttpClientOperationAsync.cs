@@ -20,10 +20,10 @@ namespace DemoForFactory.HttpAccess
         private Tuple<WebRequestHandler, HttpClient> _handleClient;
         private CancellationToken _cancellationToken;
         private ILogger _logger = LogManager.GetCurrentClassLogger();
-        static String QacaFilePath = @"C:\WorkSpace\RelateProject\Saas\App调用云的证书\qa.cer";
-        static String ProductFilePath = @"C:\WorkSpace\RelateProject\Saas\App调用云的证书\DigiCertGlobalRootCA.crt";
+        //static String QacaFilePath = @"C:\WorkSpace\RelateProject\Saas\App调用云的证书\qa.cer";
+        static String productFilePath = @"C:\WorkSpace\DigiCertGlobalRootCA.crt";
 
-        static String caFilePath = ProductFilePath;
+        static String caFilePath = productFilePath;
 
         X509Certificate2 x509Certificate2 = null;
 
@@ -179,6 +179,7 @@ namespace DemoForFactory.HttpAccess
 
             this.CreateX509Certificate2(caFilePath, "");
             ServicePointManager.ServerCertificateValidationCallback = RemoteCertificateValidate;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
             Task<HttpResponseMessage> task = null;
             try
@@ -215,6 +216,7 @@ namespace DemoForFactory.HttpAccess
 
             this.CreateX509Certificate2(caFilePath, "");
             ServicePointManager.ServerCertificateValidationCallback = RemoteCertificateValidate;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
 
             Task<HttpResponseMessage> task = null;
@@ -245,6 +247,7 @@ namespace DemoForFactory.HttpAccess
 
             this.CreateX509Certificate2(caFilePath, "");
             ServicePointManager.ServerCertificateValidationCallback = RemoteCertificateValidate;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
             Task<HttpResponseMessage> task = null;
             try
@@ -273,6 +276,7 @@ namespace DemoForFactory.HttpAccess
 
             this.CreateX509Certificate2(caFilePath, "");
             ServicePointManager.ServerCertificateValidationCallback = RemoteCertificateValidate;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
             Task<HttpResponseMessage> task = null;
             try

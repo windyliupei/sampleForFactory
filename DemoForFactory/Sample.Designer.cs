@@ -102,7 +102,7 @@
             this.txt_ApiHost.Name = "txt_ApiHost";
             this.txt_ApiHost.Size = new System.Drawing.Size(483, 20);
             this.txt_ApiHost.TabIndex = 27;
-            this.txt_ApiHost.Text = "localhost";
+            this.txt_ApiHost.Text = "qa.homecloud.honeywell.com.cn";
             // 
             // num_ApiPort
             // 
@@ -117,7 +117,7 @@
             this.num_ApiPort.Size = new System.Drawing.Size(101, 20);
             this.num_ApiPort.TabIndex = 28;
             this.num_ApiPort.Value = new decimal(new int[] {
-            8081,
+            443,
             0,
             0,
             0});
@@ -194,7 +194,6 @@
             this.txt_Token.Name = "txt_Token";
             this.txt_Token.Size = new System.Drawing.Size(481, 20);
             this.txt_Token.TabIndex = 34;
-            this.txt_Token.Text = "";
             // 
             // lbl_token
             // 
